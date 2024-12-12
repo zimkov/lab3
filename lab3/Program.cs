@@ -11,21 +11,39 @@ namespace lab3
         private static int _bufferSize = 5; // Максимальный размер буфера
         private static Mutex _mutex = new Mutex();
         private static Random _random = new Random();
+        static List<int> list1 = new List<int>();
+        static List<int> list2 = new List<int>();  
         static void Main(string[] args)
         {
             // Создаем канал
             var channel = Channel.CreateUnbounded<int>();
 
+
             // Запускаем продюсер и консюмер в отдельных потоках
             Thread producerThread = new Thread(() => Producer(channel.Writer));
+            Thread producerThread2 = new Thread(() => Producer(channel.Writer));
+            Thread producerThread3 = new Thread(() => Producer(channel.Writer));
             Thread consumerThread = new Thread(() => Consumer(channel.Reader));
+            Thread consumerThread2 = new Thread(() => Consumer(channel.Reader));
 
             producerThread.Start();
+            producerThread2.Start();
+            producerThread3.Start();
             consumerThread.Start();
+            consumerThread2.Start();
 
             // Ждем завершения потоков
             producerThread.Join();
+            producerThread2.Join();
+            producerThread3.Join();
             consumerThread.Join();
+            consumerThread2.Join();
+
+            Console.WriteLine("Consumer: ");
+            foreach(var item in list2)
+            {
+                Console.Write(item);
+            }
         }
 
         static void Producer(ChannelWriter<int> writer)
@@ -37,7 +55,7 @@ namespace lab3
                 Thread.Sleep(new Random().Next(100, 500)); // Имитация времени производства
             }
 
-            writer.Complete(); // Завершает добавление в канал
+            //writer.Complete(); // Завершает добавление в канал
         }
 
         static void Consumer(ChannelReader<int> reader)
@@ -45,17 +63,18 @@ namespace lab3
             while (reader.TryRead(out var item))
             {
                 Console.WriteLine($"Consumer consumed: {item}");
+                list2.Add(item);
                 Thread.Sleep(new Random().Next(100, 500)); // Имитация времени потребления
             }
 
             // Проверяем на наличие оставшихся элементов после завершения записи
-            while (reader.WaitToReadAsync().Result)
-            {
-                while (reader.TryRead(out var item))
-                {
-                    Console.WriteLine($"Consumer consumed: {item}");
-                }
-            }
+            //while (reader.WaitToReadAsync().Result)
+            //{
+            //    while (reader.TryRead(out var item))
+            //    {
+            //        Console.WriteLine($"Consumer consumed: {item}");
+            //    }
+            //}
         }
 
 
